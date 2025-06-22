@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+<<<<<<< HEAD
       # SAFE Credential Configuration
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v3
@@ -33,9 +34,37 @@ jobs:
           docker build -t $ECR_REPO .
           docker push $ECR_REPO:${{ github.sha }}
 
+=======
+      # Configure AWS Credentials
+      - name: Configure AWS credentials
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ format('{0}', secrets.AWS_ACCESS_KEY_ID) }}
+          aws-secret-access-key: ${{ format('{0}', secrets.AWS_SECRET_ACCESS_KEY) }}
+          aws-region: us-east-1
+
+      # Login to ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Build and Push Docker Image
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fastapi-crud
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REPO .
+          docker tag $ECR_REPO:latest $ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REPO:$IMAGE_TAG
+
+      # Deploy to ECS
+>>>>>>> e06cf4cdeb6b74c325761c132e1de613c3e668f1
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
-            --force-new-deployment
+            --force-new-deployment \
+            --region $AWS_REGION
