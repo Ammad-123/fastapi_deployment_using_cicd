@@ -50,7 +50,7 @@ jobs:
       - name: Force new ECS deployment
         run: |
           set -e
-          echo "Triggering ECS deployment..."
+          echo "Triggering ECS deployment."
           aws ecs update-service \
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
