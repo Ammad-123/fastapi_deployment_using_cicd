@@ -13,8 +13,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: fastapi_crud_secrets_for_aws # 🔧 This is the required fix
-
+    environment: fastapi_crud_secrets_for_aws
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
