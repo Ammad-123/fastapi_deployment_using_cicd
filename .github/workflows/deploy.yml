@@ -13,9 +13,15 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify Secrets
+        run: |
+          echo "AWS_ACCESS_KEY_ID exists: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+          echo "AWS_SECRET_ACCESS_KEY exists: ${{ secrets.AWS_SECRET_ACCESS_KEY != '' }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -25,17 +31,22 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image
+      - name: Build, tag, and push Docker image to ECR
         run: |
-          docker build -t $ECR_REPO .
+          set -e
+          echo "Building Docker image..."
+          docker build -t $ECR_REPO:latest .
           docker tag $ECR_REPO:latest $ECR_REPO:${{ github.sha }}
+          echo "Pushing both latest and commit-tagged images to ECR..."
+          docker push $ECR_REPO:latest
           docker push $ECR_REPO:${{ github.sha }}
 
-      - name: Deploy to ECS
+      - name: Force new ECS deployment
         run: |
+          set -e
+          echo "Triggering ECS deployment..."
           aws ecs update-service \
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
