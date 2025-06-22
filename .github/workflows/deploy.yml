@@ -32,8 +32,12 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
+        id: ecr-login
 
       - name: Build, tag, and push Docker image to ECR
+        env:
+          DOCKER_USERNAME: AWS
+          DOCKER_PASSWORD: ${{ steps.ecr-login.outputs.docker_password }}
         run: |
           set -e
           echo "Building Docker image..."
