@@ -1,0 +1,43 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: 323612677378.dkr.ecr.us-east-1.amazonaws.com/fastapi-crud
+  ECS_CLUSTER: fastapi-cluster
+  ECS_SERVICE: fastapi-service
+  TASK_DEFINITION: fastapi-crud-task.json
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Configure AWS Credentials
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Login to ECR
+      - uses: aws-actions/amazon-ecr-login@v1
+
+      # Build and Push Docker Image
+      - name: Build and Push
+        run: |
+          docker build -t $ECR_REPO .
+          docker tag $ECR_REPO:latest $ECR_REPO:${{ github.sha }}
+          docker push $ECR_REPO:${{ github.sha }}
+
+      # Deploy to ECS
+      - name: Deploy
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment
